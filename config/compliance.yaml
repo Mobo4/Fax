@@ -1,0 +1,144 @@
+# Compliance Configuration - TCPA and HIPAA Requirements
+# ⚠️ CRITICAL: Review these settings before any fax marketing campaign
+
+tcpa:
+  # Junk Fax Prevention Act Requirements
+  enabled: true
+  
+  requirements:
+    # MUST have prior express written consent before sending
+    prior_consent_required: true
+    consent_documentation:
+      store_consent_records: true
+      consent_fields:
+        - timestamp
+        - consent_method  # web_form, verbal, written
+        - ip_address      # for web forms
+        - consent_text    # exact language agreed to
+    
+    # Every fax MUST include opt-out mechanism
+    opt_out_required: true
+    opt_out_methods:
+      - phone           # toll-free number
+      - email           # dedicated email
+      - fax             # reply fax
+      - web             # online form
+    opt_out_response_days: 10  # Must honor within 10 business days
+    
+    # Sender identification required on every fax
+    sender_identification:
+      name: "Eye Care Center of Orange County"
+      phone: "+17145551234"
+      address: "123 Main Street, Irvine, CA 92614"
+      email: "optout@eyecarecenteroc.com"
+    
+    # Do-Not-Fax list management
+    do_not_fax_list:
+      enabled: true
+      list_path: "data/lists/do_not_fax.csv"
+      sync_frequency: "daily"
+      check_before_send: true
+    
+    # Header requirements
+    header_requirements:
+      include_date_time: true
+      include_sender_id: true
+      include_page_count: true
+  
+  penalties:
+    per_violation_min: 500
+    per_violation_max: 1500
+    willful_violations_treble: true  # 3x damages for willful violations
+    class_action_risk: "HIGH"
+
+hipaa:
+  # Health Insurance Portability and Accountability Act
+  enabled: true
+  
+  requirements:
+    # Business Associate Agreement required with fax vendor
+    baa_required: true
+    baa_vendors:
+      - provider: telnyx
+        signed: true
+        date: "2025-01-15"
+        document_path: "docs/baa/telnyx_baa_signed.pdf"
+      - provider: srfax
+        signed: false
+        date: null
+        document_path: null
+    
+    # Encryption requirements
+    encryption:
+      at_rest: true
+      in_transit: true  # HTTPS/TLS
+      algorithm: "AES-256"
+    
+    # Access control
+    access_control:
+      role_based: true
+      roles:
+        - name: admin
+          permissions: [read, write, delete, configure]
+        - name: clinical_staff
+          permissions: [read, write]
+        - name: billing
+          permissions: [read]
+      require_authentication: true
+      session_timeout_minutes: 30
+    
+    # Audit trail
+    audit:
+      enabled: true
+      log_path: "logs/audit.log"
+      events:
+        - fax_received
+        - fax_opened
+        - fax_downloaded
+        - fax_attached_to_patient
+        - fax_deleted
+        - access_denied
+      retention_days: 2190  # 6 years per HIPAA
+    
+    # PHI handling
+    phi_handling:
+      minimize_exposure: true
+      cover_page_required: true
+      cover_page_disclaimer: |
+        CONFIDENTIALITY NOTICE: This facsimile transmission contains 
+        confidential information that is legally privileged. This information 
+        is intended only for the use of the individual or entity named above. 
+        If you are not the intended recipient, you are hereby notified that 
+        any disclosure, copying, distribution, or action taken in reliance 
+        on the contents of this fax is strictly prohibited. If you have 
+        received this fax in error, please notify us immediately by calling 
+        the number above and destroy this fax.
+    
+    # Breach notification
+    breach_notification:
+      notify_within_days: 60
+      notification_contacts:
+        - email: "compliance@eyecarecenteroc.com"
+        - email: "admin@eyecarecenteroc.com"
+
+# Marketing-specific compliance
+marketing:
+  # Pre-send checklist
+  pre_send_checklist:
+    - check_consent_record
+    - verify_not_on_dnf_list
+    - validate_opt_out_present
+    - verify_sender_info
+    - check_baa_if_phi
+  
+  # Campaign limits
+  limits:
+    max_faxes_per_day: 500
+    max_faxes_per_recipient_per_month: 1
+    require_approval_above: 100  # Human approval for campaigns > 100
+  
+  # Content requirements
+  content:
+    max_pages: 2
+    require_relevant_content: true  # Healthcare-related only
+    no_promotional_with_phi: true   # Can't mix PHI with promotional

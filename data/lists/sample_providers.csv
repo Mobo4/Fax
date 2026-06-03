@@ -1,0 +1,11 @@
+npi,name,specialty,practice,fax,phone,email,address,city,state,zip,opted_out
+1234567890,Dr. John Smith,Optometrist,Smith Vision Care,+17145551001,+17145551000,jsmith@smithvision.com,123 Main St,Irvine,CA,92614,false
+2345678901,Dr. Sarah Johnson,Ophthalmologist,Johnson Eye Institute,+17145551003,+17145551002,sjohnson@johnsoneye.com,456 Oak Ave,Costa Mesa,CA,92626,false
+3456789012,Dr. Michael Chen,Primary Care Physician,Chen Family Medicine,+19495551005,+19495551004,mchen@chenfamily.com,789 Birch Rd,Laguna Beach,CA,92651,false
+4567890123,Dr. Lisa Rodriguez,Optometrist,Clear Vision Optometry,+17145551007,+17145551006,lrodriguez@clearvision.com,321 Palm Dr,Newport Beach,CA,92660,false
+5678901234,Dr. David Kim,Ophthalmologist,Kim Eye Center,+19495551009,+19495551008,dkim@kimeye.com,654 Sunset Blvd,Huntington Beach,CA,92648,false
+6789012345,Dr. Jennifer Lee,Primary Care Physician,Lee Medical Group,+17145551011,+17145551010,jlee@leemedical.com,987 Harbor Way,Dana Point,CA,92629,false
+7890123456,Dr. Robert Williams,Optometrist,Williams Eye Care,+19495551013,+19495551012,rwilliams@williamseye.com,147 Beach St,San Clemente,CA,92672,false
+8901234567,Dr. Maria Garcia,Ophthalmologist,Garcia Vision Specialists,+17145551015,+17145551014,mgarcia@garciavision.com,258 Ocean Dr,Laguna Niguel,CA,92677,false
+9012345678,Dr. James Brown,Primary Care Physician,Brown Family Practice,+19495551017,+19495551016,jbrown@brownfamily.com,369 Valley Rd,Mission Viejo,CA,92691,false
+0123456789,Dr. Emily Davis,Optometrist,Davis Optometry,+17145551019,+17145551018,edavis@davisoptometry.com,741 Hill Ave,Tustin,CA,92780,false

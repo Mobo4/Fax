@@ -1,0 +1,45 @@
+# Healthcare Fax Marketing System - Dependencies
+
+# Fax API
+telnyx>=2.0.0
+
+# Web Framework (Webhook Receiver)
+flask>=3.0.0
+gunicorn>=21.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+
+# AI Content Generation
+anthropic>=0.18.0
+
+# Google Cloud (OCR)
+google-cloud-vision>=3.5.0
+
+# Google Drive
+google-api-python-client>=2.100.0
+google-auth>=2.25.0
+google-auth-oauthlib>=1.2.0
+
+# PDF Generation
+weasyprint>=60.0
+markdown>=3.5.0
+jinja2>=3.1.0
+
+# Data Processing
+pandas>=2.0.0
+phonenumbers>=8.13.0
+
+# Fuzzy Matching (Patient Matching)
+rapidfuzz>=3.5.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Logging
+structlog>=24.1.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.23.0

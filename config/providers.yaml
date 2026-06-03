@@ -1,0 +1,71 @@
+# Fax Provider Configuration
+# All credentials stored in environment variables for security
+
+default_provider: telnyx
+
+providers:
+  telnyx:
+    name: "Telnyx Programmable Fax"
+    enabled: true
+    api_base: "https://api.telnyx.com/v2"
+    credentials:
+      api_key: "${TELNYX_API_KEY}"
+      connection_id: "${TELNYX_FAX_APP_ID}"
+    fax_number: "${TELNYX_FAX_NUMBER}"  # E.164 format: +15551234567
+    webhook_url: "${WEBHOOK_BASE_URL}/webhook/fax/telnyx"
+    options:
+      quality: "high"  # high, medium, low
+      store_media: true
+    pricing:
+      per_page: 0.007
+      number_monthly: 1.00
+    hipaa:
+      baa_signed: true
+      baa_date: "2025-01-15"
+      
+  srfax:
+    name: "SRFax"
+    enabled: false
+    api_base: "https://www.srfax.com/SRF_SecWebSvc.php"
+    credentials:
+      access_id: "${SRFAX_ACCESS_ID}"
+      access_pwd: "${SRFAX_ACCESS_PWD}"
+      account_number: "${SRFAX_ACCOUNT_NUMBER}"
+    fax_number: "${SRFAX_FAX_NUMBER}"
+    polling_interval_seconds: 60  # No webhooks, must poll
+    hipaa:
+      baa_signed: true
+      baa_date: null
+      
+  faxplus:
+    name: "Fax.Plus"
+    enabled: false
+    api_base: "https://restapi.fax.plus/v3"
+    credentials:
+      api_key: "${FAXPLUS_API_KEY}"
+    fax_number: "${FAXPLUS_FAX_NUMBER}"
+    webhook_url: "${WEBHOOK_BASE_URL}/webhook/fax/faxplus"
+    hipaa:
+      baa_signed: false
+      baa_date: null
+
+# Webhook receiver configuration
+webhook:
+  port: 8080
+  host: "0.0.0.0"
+  secret: "${WEBHOOK_SECRET}"
+  timeout_seconds: 30
+  
+# Storage paths (relative to project root)
+storage:
+  inbox: "data/inbox"
+  outbox: "data/outbox"
+  processing: "data/processing"
+  archive: "data/archive"
+  errors: "data/errors"
+  
+# Retry configuration
+retry:
+  max_attempts: 3
+  backoff_base_seconds: 60  # 1m, 2m, 4m
+  backoff_multiplier: 2

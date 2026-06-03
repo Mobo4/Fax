@@ -1,0 +1,16 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+data/inbox/
+data/outbox/
+data/processing/
+data/errors/
+data/archive/
+staging/generated_faxes/
+staging/ghl_generated/
+staging/ocr_output/
+logs/fax_activity.md
+*.pdf
+.DS_Store

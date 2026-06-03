@@ -1,0 +1,164 @@
+# Healthcare Provider Lists Configuration
+
+# Vendor configurations for purchasing/obtaining provider lists
+vendors:
+  careprecise:
+    name: "CarePrecise"
+    website: "https://careprecise.com"
+    type: "download"  # download, api, manual
+    specialty:
+      - all_providers
+      - physicians
+      - healthcare_facilities
+    data_fields:
+      - npi
+      - name
+      - specialty
+      - taxonomy
+      - phone
+      - fax  # ✅ Has fax numbers
+      - email
+      - address
+      - hospital_affiliations
+    coverage: "US National"
+    accuracy: "95%"
+    update_frequency: "monthly"
+    pricing: "subscription"
+    notes: "Best source for comprehensive fax lists"
+    
+  provyx:
+    name: "Provyx"
+    website: "https://getprovyx.com"
+    type: "custom"  # Custom list building
+    specialty:
+      - optometrist
+      - ophthalmologist
+      - eye_care
+    data_fields:
+      - npi
+      - name
+      - practice_name
+      - phone
+      - fax  # Request custom
+      - email
+      - website
+      - linkedin
+      - taxonomy
+    coverage: "US National"
+    accuracy: "verified against CMS NPI"
+    notes: "Specialized in eye care - contact for custom fax list"
+    
+  ampliz:
+    name: "Ampliz Healthcare Intelligence"
+    website: "https://ampliz.com"
+    type: "api"
+    specialty:
+      - all_specialties
+      - general_practitioners
+      - primary_care
+      - ophthalmologists
+    data_fields:
+      - npi
+      - name
+      - email
+      - phone
+      - fax
+      - address
+      - specialty
+    coverage: "Global (131 countries)"
+    accuracy: "95% claimed"
+    api_available: true
+    
+  campaignlake:
+    name: "CampaignLake"
+    website: "https://campaignlake.com"
+    type: "download"
+    specialty:
+      - primary_care_physicians
+      - general_practitioners
+    data_fields:
+      - npi
+      - name
+      - email
+      - phone
+      - fax
+      - specialty
+      - location
+      - experience
+      - practice_size
+    accuracy: "verified via NPI, medical boards, hospital directories"
+
+# Target provider types for this project
+target_specialties:
+  - code: "207Q00000X"
+    name: "Family Medicine (PCP)"
+    priority: 1
+    
+  - code: "152W00000X"
+    name: "Optometrist"
+    priority: 1
+    
+  - code: "207W00000X"
+    name: "Ophthalmologist"
+    priority: 1
+    
+  - code: "152WC0802X"
+    name: "Cornea and Contact Management"
+    priority: 2
+
+# Geographic targeting
+geography:
+  primary:
+    - county: "Orange County"
+      state: "CA"
+      zip_codes:
+        - "926*"  # Irvine, Lake Forest, etc.
+        - "927*"  # Santa Ana, Costa Mesa
+        - "928*"  # Anaheim, Fullerton
+  secondary:
+    - county: "Los Angeles County"
+      state: "CA"
+    - county: "San Diego County"
+      state: "CA"
+
+# List management
+list_management:
+  storage_path: "data/lists"
+  
+  # Standard schema for all imported lists
+  standard_schema:
+    required_fields:
+      - npi
+      - name
+      - fax  # Must have fax for this project
+    optional_fields:
+      - practice_name
+      - specialty
+      - taxonomy
+      - phone
+      - email
+      - address
+      - city
+      - state
+      - zip
+      
+  # Deduplication rules
+  deduplication:
+    primary_key: "npi"
+    secondary_keys: ["fax", "email"]
+    
+  # Validation rules
+  validation:
+    fax_format: "E.164"  # +1XXXXXXXXXX
+    npi_length: 10
+    require_valid_npi: true
+    
+  # Opt-out management
+  opt_out:
+    list_path: "data/lists/do_not_fax.csv"
+    merge_frequency: "before_each_campaign"
+    sources:
+      - "manual_requests"
+      - "fax_bounces"
+      - "email_optouts"
+      - "phone_optouts"

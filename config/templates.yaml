@@ -1,0 +1,124 @@
+# Fax Templates Configuration
+
+default_sender:
+  name: "Eye Care Center of Orange County"
+  phone: "+17145551234"
+  fax: "+17145551235"
+  address: "123 Main Street, Irvine, CA 92614"
+  email: "info@eyecarecenteroc.com"
+  opt_out_email: "optout@eyecarecenteroc.com"
+
+templates:
+  - id: "referral_introduction"
+    name: "Referral Introduction"
+    description: "Introduce practice to potential referring providers"
+    file: "templates/referral_introduction.md"
+    category: "outreach"
+    target_specialties:
+      - pcp
+      - family_medicine
+      - internal_medicine
+    variables:
+      - provider_name
+      - provider_specialty
+      - practice_name
+    compliance:
+      requires_consent: true
+      opt_out_required: true
+      max_pages: 1
+      
+  - id: "specialty_services"
+    name: "Specialty Services Announcement"
+    description: "Announce specialty services (scleral lenses, keratoconus, etc.)"
+    file: "templates/specialty_services.md"
+    category: "announcement"
+    target_specialties:
+      - optometrist
+      - ophthalmologist
+    variables:
+      - provider_name
+      - service_name
+      - service_description
+    compliance:
+      requires_consent: true
+      opt_out_required: true
+      max_pages: 2
+      
+  - id: "comanagement_partnership"
+    name: "Co-Management Partnership"
+    description: "Propose co-management arrangement for complex cases"
+    file: "templates/comanagement_partnership.md"
+    category: "partnership"
+    target_specialties:
+      - optometrist
+      - ophthalmologist
+    variables:
+      - provider_name
+      - practice_name
+      - specialty_focus
+    compliance:
+      requires_consent: true
+      opt_out_required: true
+      max_pages: 2
+      
+  - id: "patient_followup_request"
+    name: "Patient Follow-up Request"
+    description: "Request follow-up on referred patient"
+    file: "templates/patient_followup_request.md"
+    category: "clinical"
+    target_specialties:
+      - all
+    variables:
+      - provider_name
+      - patient_name  # PHI - requires HIPAA cover
+      - referral_date
+    compliance:
+      requires_consent: false  # Healthcare exemption
+      opt_out_required: false
+      requires_phi_cover: true
+      max_pages: 2
+
+# AI generation settings
+ai_generation:
+  enabled: true
+  provider: "anthropic"  # anthropic, openai
+  model: "claude-3-5-sonnet-20241022"
+  
+  system_prompt: |
+    You are a professional medical copywriter creating fax content for 
+    healthcare provider outreach. Your writing should be:
+    
+    1. Professional and respectful of medical practices
+    2. Concise and scannable (providers are busy)
+    3. Clear about the value proposition
+    4. Compliant with healthcare marketing standards
+    5. Free of exaggerated claims
+    
+    Always include:
+    - Clear identification of the sender
+    - Specific call to action
+    - Contact information
+    - Opt-out notice (when required)
+    
+  parameters:
+    max_tokens: 800
+    temperature: 0.7
+
+# PDF generation settings
+pdf_generation:
+  engine: "weasyprint"  # weasyprint, reportlab, playwright
+  page_size: "letter"
+  margins:
+    top: "0.75in"
+    bottom: "0.75in"
+    left: "1in"
+    right: "1in"
+  font:
+    family: "Arial, sans-serif"
+    size: "11pt"
+  header:
+    include: true
+    logo_path: "assets/logo.png"
+  footer:
+    include: true
+    text: "Confidential - For Intended Recipient Only"
