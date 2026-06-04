@@ -66,6 +66,20 @@ INBOX_DIR.mkdir(parents=True, exist_ok=True)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "service": "Fax Webhook Server",
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "telnyx_webhook": "/webhook/fax/telnyx",
+            "srfax_webhook": "/webhook/fax/srfax",
+            "ghl_send_fax": "/api/send-fax"
+        }
+    })
+
+
 def verify_telnyx_signature(payload: bytes, signature: str) -> bool:
     """Verify Telnyx webhook signature for security."""
     if not WEBHOOK_SECRET:
