@@ -316,17 +316,41 @@ def notify_fax_status(status_label: str, to_number: str, fax_data: dict) -> None
 
         formatted = format_fax_number(to_number)
         subject = f"{status_label} fax to {formatted}"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z") or datetime.now().strftime("%Y-%m-%d %H:%M:%S PST")
 
         lines = [
-            f"Fax ID:  {fax_data.get('fax_id', 'N/A')}",
-            f"From:    {fax_data.get('from', 'N/A')}",
-            f"To:      {to_number or 'N/A'}",
-            f"Pages:   {fax_data.get('page_count', 'N/A')}",
-            f"Status:  {status_label}",
+            "=" * 50,
+            "FAX TRANSMISSION VERIFICATION",
+            "=" * 50,
+            "",
+            f"Date/Time:       {timestamp}",
+            f"Fax ID:          {fax_data.get('fax_id', 'N/A')}",
+            f"From:            {fax_data.get('from', 'N/A')}",
+            f"To:              {to_number or 'N/A'} ({formatted})",
+            f"Pages:           {fax_data.get('page_count', 'N/A')}",
+            f"Result:          {status_label.upper()}",
         ]
         reason = fax_data.get("failure_reason")
         if reason:
-            lines.append(f"Reason:  {reason}")
+            lines.append(f"Failure Reason:  {reason}")
+        lines += [
+            "",
+            "-" * 50,
+            "LEGAL NOTICE — CALIFORNIA PROOF OF FAX SERVICE",
+            "-" * 50,
+            "This transmission confirmation constitutes proof of",
+            "service by facsimile pursuant to California Code of",
+            "Civil Procedure § 1013(e). This record confirms that",
+            f"the above document was {'successfully transmitted' if status_label == 'Completed' else 'attempted for transmission'}",
+            f"to fax number {formatted} on {timestamp}.",
+            "",
+            f"Sending Party:   {os.getenv('SENDER_NAME', 'Eye Care Center of Orange County')}",
+            f"Sender Fax:      {format_fax_number(os.getenv('SENDER_FAX', ''))}",
+            f"Confirmation ID: {fax_data.get('fax_id', 'N/A')}",
+            "",
+            "Retain this record for your files.",
+            "=" * 50,
+        ]
 
         send_email_notification(
             to_email=NOTIFY_EMAIL,
