@@ -60,6 +60,13 @@ app = Flask(__name__)
 INBOX_DIR = PROJECT_ROOT / "data" / "inbox"
 LOGS_DIR = PROJECT_ROOT / "logs"
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
+NOTIFY_EMAIL = os.getenv("NOTIFY_EMAIL", "eyecarecenteroc@gmail.com")
+
+# failure_reason values that mean partial transmission (→ "Incomplete"), not hard reject (→ "Error")
+INCOMPLETE_REASONS = set(
+    r.strip().lower()
+    for r in os.getenv("INCOMPLETE_FAILURE_REASONS", "partial,transmission,disconnected,timeout,interrupted").split(",")
+)
 
 # Ensure directories exist at import time (gunicorn doesn't call main())
 INBOX_DIR.mkdir(parents=True, exist_ok=True)
@@ -244,10 +251,15 @@ def telnyx_webhook():
             
         elif event_type == "fax.delivered":
             log_to_activity_file("✅ Fax Delivered", fax_data)
-            
+            notify_fax_status("Completed", fax_data.get("to"), fax_data)
+
         elif event_type == "fax.failed":
-            error_code = fax_data.get("failure_reason", "unknown")
-            log_to_activity_file(f"❌ Fax Failed: {error_code}", fax_data)
+            failure_reason = fax_data.get("failure_reason", "unknown")
+            log_to_activity_file(f"❌ Fax Failed: {failure_reason}", fax_data)
+            # Classify: if the reason contains any incomplete keyword → "Incomplete", else "Error"
+            reason_lower = failure_reason.lower()
+            label = "Incomplete" if any(kw in reason_lower for kw in INCOMPLETE_REASONS) else "Error"
+            notify_fax_status(label, fax_data.get("to"), fax_data)
             
         return jsonify({"status": "ok", "event_type": event_type}), 200
         
@@ -255,8 +267,8 @@ def telnyx_webhook():
         logger.exception("webhook_error", error=str(e))
         return jsonify({"error": str(e)}), 500
 
-def send_email_notification(to_email: str, subject: str, body: str, attachment_path: Path):
-    """Send email with fax attachment via SMTP."""
+def send_email_notification(to_email: str, subject: str, body: str, attachment_path: Optional[Path] = None):
+    """Send email via SMTP, optionally with a PDF attachment."""
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
@@ -268,21 +280,62 @@ def send_email_notification(to_email: str, subject: str, body: str, attachment_p
     msg["Subject"] = subject
     msg.attach(MIMEText(body))
 
-    with open(attachment_path, "rb") as f:
-        part = MIMEApplication(f.read(), Name=attachment_path.name)
-        part["Content-Disposition"] = f'attachment; filename="{attachment_path.name}"'
-        msg.attach(part)
+    if attachment_path:
+        with open(attachment_path, "rb") as f:
+            part = MIMEApplication(f.read(), Name=attachment_path.name)
+            part["Content-Disposition"] = f'attachment; filename="{attachment_path.name}"'
+            msg.attach(part)
 
-    # Assumes Gmail/Standard SMTP - configure in .env
     smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    
+
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
         server.login(os.getenv("SENDER_EMAIL"), os.getenv("SMTP_PASSWORD"))
         server.send_message(msg)
-    
-    logger.info("email_sent", to=to_email)
+
+    logger.info("email_sent", to=to_email, subject=subject)
+
+
+def format_fax_number(raw: str) -> str:
+    """Format +17145551234 → 714-555-1234 for human-readable subjects."""
+    digits = "".join(c for c in (raw or "") if c.isdigit())
+    if digits.startswith("1") and len(digits) == 11:
+        digits = digits[1:]
+    if len(digits) == 10:
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    return raw or "unknown"
+
+
+def notify_fax_status(status_label: str, to_number: str, fax_data: dict) -> None:
+    """Email a fax status notification — must never raise (webhook stays 200)."""
+    try:
+        if not os.getenv("SMTP_PASSWORD"):
+            logger.warning("notify_skipped_no_smtp_password")
+            return
+
+        formatted = format_fax_number(to_number)
+        subject = f"{status_label} fax to {formatted}"
+
+        lines = [
+            f"Fax ID:  {fax_data.get('fax_id', 'N/A')}",
+            f"From:    {fax_data.get('from', 'N/A')}",
+            f"To:      {to_number or 'N/A'}",
+            f"Pages:   {fax_data.get('page_count', 'N/A')}",
+            f"Status:  {status_label}",
+        ]
+        reason = fax_data.get("failure_reason")
+        if reason:
+            lines.append(f"Reason:  {reason}")
+
+        send_email_notification(
+            to_email=NOTIFY_EMAIL,
+            subject=subject,
+            body="\n".join(lines),
+        )
+        logger.info("fax_status_notified", status=status_label, to=to_number)
+    except Exception as e:
+        logger.error("fax_status_notify_failed", error=str(e), status=status_label)
 
 
 @app.route("/webhook/fax/srfax", methods=["POST"])
