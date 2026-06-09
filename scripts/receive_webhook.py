@@ -18,6 +18,7 @@ import sys
 import json
 import hashlib
 import hmac
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -307,13 +308,9 @@ def format_fax_number(raw: str) -> str:
     return raw or "unknown"
 
 
-def notify_fax_status(status_label: str, to_number: str, fax_data: dict) -> None:
-    """Email a fax status notification — must never raise (webhook stays 200)."""
+def _send_fax_notification(status_label: str, to_number: str, fax_data: dict) -> None:
+    """Synchronous email send — called from a background thread."""
     try:
-        if not os.getenv("SMTP_PASSWORD"):
-            logger.warning("notify_skipped_no_smtp_password")
-            return
-
         formatted = format_fax_number(to_number)
         subject = f"{status_label} fax to {formatted}"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z") or datetime.now().strftime("%Y-%m-%d %H:%M:%S PST")
@@ -360,6 +357,18 @@ def notify_fax_status(status_label: str, to_number: str, fax_data: dict) -> None
         logger.info("fax_status_notified", status=status_label, to=to_number)
     except Exception as e:
         logger.error("fax_status_notify_failed", error=str(e), status=status_label)
+
+
+def notify_fax_status(status_label: str, to_number: str, fax_data: dict) -> None:
+    """Fire email in a background thread so the webhook returns 200 immediately."""
+    if not os.getenv("SMTP_PASSWORD"):
+        logger.warning("notify_skipped_no_smtp_password")
+        return
+    threading.Thread(
+        target=_send_fax_notification,
+        args=(status_label, to_number, fax_data),
+        daemon=True,
+    ).start()
 
 
 @app.route("/webhook/fax/srfax", methods=["POST"])
